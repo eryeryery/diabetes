@@ -1,0 +1,66 @@
+#import all the environment needed
+
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+from keras.models import Sequential
+from keras.layers import Dense
+
+!pip install -q matplotlib-venn
+!pip install scikit-learn
+
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+
+# Code to read csv file into Colaboratory:
+!pip install -U -q PyDrive
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
+from google.colab import auth
+from oauth2client.client import GoogleCredentials
+
+# Authenticate and create the PyDrive client.
+auth.authenticate_user()
+gauth = GoogleAuth()
+gauth.credentials = GoogleCredentials.get_application_default()
+drive = GoogleDrive(gauth)
+
+
+id = '1Yk3d4nLyQ2pDGHHvZYHX_TbkGFz5Udzg'; # get the data
+# 'https://drive.google.com/open?id=1Yk3d4nLyQ2pDGHHvZYHX_TbkGFz5Udzg'
+downloaded = drive.CreateFile({'id': id})
+downloaded.GetContentFile('diabetes.csv')
+
+# seed for reproducing same results
+seed = 9
+np.random.seed(seed)
+
+# load diabetes dataset
+dataset = np.loadtxt('diabetes.csv', delimiter=',', skiprows=1)
+
+# split into input and output variables
+X = dataset[:,0:8]
+Y = dataset[:,8]
+
+# split the data into training (67%) and testing (33%)
+(X_train, X_test, Y_train, Y_test) = train_test_split(X, Y, test_size=0.33, random_state=seed)
+
+# create the model
+model = Sequential()
+model.add(Dense(8, input_dim=8, init='uniform', activation='relu'))
+model.add(Dense(6, init='uniform', activation='relu'))
+model.add(Dense(1, init='uniform', activation='sigmoid'))
+
+# compile the model
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+# fit the model
+model.fit(X_train, Y_train, validation_data=(X_test, Y_test), nb_epoch=100, batch_size=5)
+
+# evaluate the model
+scores = model.evaluate(X_test, Y_test)
+print ("Accuracy: %.2f%%" %(scores[1]*100))
+
+
